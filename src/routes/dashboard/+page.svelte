@@ -3,15 +3,16 @@
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { auth, db } from '$lib/firebase';
-    import { collection, addDoc, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+    import { collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
     import { onAuthStateChanged } from 'firebase/auth';
     import { writable } from 'svelte/store';
   
-    const notes = writable([]);
+    const notes = writable([]); 
     const archivedNotes = writable([]);
   
     let note = '';
     let user = null;
+    let yes = false;
   
     onMount(() => {
       onAuthStateChanged(auth, (currentUser) => {
@@ -66,6 +67,11 @@
       const noteRef = doc(db, 'notes', id);
       await updateDoc(noteRef, { archived: false });
     }
+
+    async function deleteNote(id) {
+      const noteRef = doc(db, 'notes', id);
+      deleteDoc(noteRef, { archived: false });
+    }
   </script>
   
   <main>
@@ -79,7 +85,10 @@
     <ul>
       {#each $notes as note}
         <li>
-          {note.content} <button on:click={() => archiveNote(note.id)}>Archive</button>
+          <input type="checkbox" bind:checked={note.archived} on:click={() => archiveNote(note.id)}/>
+          {note.content} 
+          <!-- <button on:click={() => archiveNote(note.id)}>Archive</button> -->
+          
         </li>
       {/each}
     </ul>
@@ -88,9 +97,21 @@
     <ul>
       {#each $archivedNotes as note}
         <li>
-          {note.content} <button on:click={() => unarchiveNote(note.id)}>Unarchive</button>
+          <input type="checkbox" bind:checked={note.archived} on:click={() => unarchiveNote(note.id)}/>
+
+          {note.content}
+          <button on:click={() => deleteNote(note.id)}>delete</button>
+           <!-- <button on:click={() => unarchiveNote(note.id)}>Unarchive</button> -->
         </li>
       {/each}
     </ul>
   </main>
+
+  <style>
+    
+    main{
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+  </style>
   
